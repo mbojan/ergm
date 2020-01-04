@@ -13,27 +13,30 @@
 #' 
 #' @export
 
-vif_ergm <- function(my.ergm){
-  require(ergm)
+vif_ergm <- function(object, ...){
+  # Correlation matrix without the edges term
+  # TODO this should come from a set of simulated networks
+  cormat <- stats::cov2cor(object$covar)[-1, -1]
+
+  # MB: Not sure when there would be NAs in `covar`. Offsets perhaps? Commenting
+  # for now.
+  # 
+  # corr5<-corr5[!is.na(corr5[1:nrow(corr5)]),]
+  # corr5<-corr5[,which(!is.na(corr5[1,1:ncol(corr5)]))]
   
-  cor.mat<-cov2cor(my.ergm$covar) #calculate correlation matrix
-  corr5<-cor.mat[-c(1),-c(1)] ##omit edges term
   
-  corr5<-corr5[!is.na(corr5[1:nrow(corr5)]),]
-  corr5<-corr5[,which(!is.na(corr5[1,1:ncol(corr5)]))]
+  VIFS <- numeric(ncol(cormat))
   
-  VIFS<-matrix(0,nr=1,nc=ncol(corr5))
-  
-  for(i in 1:ncol(corr5)){
-    
-    gvec<-as.vector(corr5[-c(i),i]) ##create vector of correlations between covariate of interest and other covariates in the model
-    tgvec<-t(gvec)            
-    xcor<-solve(corr5[-c(i),-c(i)]) ##create square matrix of correlations between covariates in the model other than the one of interest
-    Rsq<-tgvec%*%xcor%*%gvec
-    VIFS[1,i]<-1/(1-Rsq)
+  for(i in 1:ncol(cormat)){
+    # Correlations of i-th with the rest
+    gvec <- cormat[-i , i, drop=FALSE] ##create vector of correlations between covariate of interest and other covariates in the model
+    tgvec <- t(gvec)            
+    xcor <- solve( cormat[-i, -i] ) ##create square matrix of correlations between covariates in the model other than the one of interest
+    Rsq <- tgvec %*% xcor %*% gvec
+    VIFS[i] <- 1/(1-Rsq)
   }
-  ##Columns are covariates as they appear in the SAOM object
-  colnames(VIFS)<-names(my.ergm$coef[-c(1)])
-  message("Higher values indicate greater correlation.\nVIF > 20 is concerning, VIF > 100 indicates severe collinearity.")
+  
+  names(VIFS) <- names(object$coef[-1])
+  #  message("Higher values indicate greater correlation.\nVIF > 20 is concerning, VIF > 100 indicates severe collinearity.")
   VIFS
 }
