@@ -163,6 +163,7 @@ Collate:
     'summary.statistics.network.R'
     'to_ergm_Cdouble.R'
     'vcov.ergm.R'
+    'vif_ergm.R'
     'wtd.median.R'
     'zzz.R'
 Remotes: github::statnet/statnet.common@master,
