@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 ###############################################################################
 # The <ergm> function fits ergms from a specified formula returning either
@@ -97,7 +97,6 @@
 #      !    #~   glm.null        :  the null fit established by MPL estimation and
 #                                   returned by <ergm.logitreg>, <ergm.pen.glm> or <glm>
 #                                   depending on the 'MPLEtype';
-#      !   #~    theta1          :  the vector of ??
 #         &      rm.coef         :  the robmon coefficients used as 'init' in the final
 #                                   estimation
 #      !   #~   loglikelihoodratio: the log-likelihood corresponding to
@@ -182,7 +181,7 @@
 #' fit. Has no effect for dyad-independent models.
 #' Since bridge sampling takes additional time, setting to FALSE may
 #' speed performance if likelihood values (and likelihood-based
-#' values like AIC and BIC) are not needed. Can be set globally via `option(ergm.eval.loglik=...)`, which is set to `TRUE` when the package is loaded.
+#' values like AIC and BIC) are not needed. Can be set globally via `option(ergm.eval.loglik=...)`, which is set to `TRUE` when the package is loaded. (See [`options?ergm`][ergm-options].)
 #' }
 #' @param estimate {If "MPLE," then the maximum pseudolikelihood estimator
 #' is returned.  If "MLE" (the default), then an approximate maximum likelihood
@@ -192,16 +191,18 @@
 #' \code{force.main} argument of \code{\link{control.ergm}}. If "CD" (\emph{EXPERIMENTAL}),
 #' the Monte-Carlo contrastive divergence estimate is returned. )
 #' }
-#' @param control {A list of control parameters for algorithm
+#' @param control A list of control parameters for algorithm
 #' tuning. Constructed using \code{\link{control.ergm}}. 
-#' }
-#' @param verbose {logical; if this is
-#' \code{TRUE}, the program will print out additional
-#' information, including goodness of fit statistics.
-#' }
-#' @param \dots {Additional
+#'
+#' @param verbose A `logical` or an integer: if this is
+#'   \code{TRUE}/\code{1}, the program will print out additional
+#'   information about the progress of estimation and
+#'   simulation. Higher values produce more verbosity.
+#'
+#' @param \dots Additional
 #' arguments, to be passed to lower-level functions.
-#' }
+#'
+#' @template basis
 #' 
 #' @return
 #' \code{\link{ergm}} returns an object of class \code{\link{ergm}} that is a list
@@ -350,7 +351,7 @@
 #' Working Paper \#39, 
 #' Center for Statistics and the Social Sciences,
 #' University of Washington.
-#' \url{https://www.csss.washington.edu/Papers/wp39.pdf}
+#' \url{https://www.csss.washington.edu/research/working-papers/assessing-degeneracy-statistical-models-social-networks}
 #' 
 #' Handcock MS (2003b).
 #' \pkg{degreenet}: Models for Skewed Count Distributions Relevant
@@ -488,9 +489,9 @@ ergm <- function(formula, response=NULL,
                  eval.loglik=getOption("ergm.eval.loglik"),
                  estimate=c("MLE", "MPLE", "CD"),
                  control=control.ergm(),
-                 verbose=FALSE,...) {
+                 verbose=FALSE,..., basis=ergm.getnetwork(formula)) {
   check.control.class("ergm", "ergm")
-  control.toplevel(control,...)
+  control.toplevel("ergm", ...)
   ergm_call <- match.call(ergm)
   
   estimate <- match.arg(estimate)
@@ -507,7 +508,7 @@ ergm <- function(formula, response=NULL,
   if(!is.null(control$seed))  set.seed(as.integer(control$seed))
   if (verbose) message("Evaluating network in model.")
   
-  nw <- ergm.getnetwork(formula)
+  nw <- basis
   proposalclass <- "c"
   
   
@@ -553,7 +554,7 @@ ergm <- function(formula, response=NULL,
     init.candidates <- init.candidates[init.candidates!="MPLE"]
     if(verbose) message("MPLE cannot be used for this constraint structure.")
   }
-  if("MPLE" %in% init.candidates && !is.null(target.stats) && is.curved(formula, response=response, term.options=control$term.options)){
+  if("MPLE" %in% init.candidates && !is.null(target.stats) && is.curved(formula, response=response, basis=nw, term.options=control$term.options)){
     init.candidates <- init.candidates[init.candidates!="MPLE"]
     if(verbose) message("At this time, MPLE cannot be used for curved families when target.stats are passed.")
   }
@@ -577,7 +578,7 @@ ergm <- function(formula, response=NULL,
     
     # no need to pass the offset term's init to SAN
     offset.terms <- model.initial$etamap$offsettheta
-    san.control <- control$SAN.control
+    san.control <- control$SAN
     
     if(verbose) message("Constructing an approximate response network.")
     ## If target.stats are given, overwrite the given network and formula
@@ -591,7 +592,7 @@ ergm <- function(formula, response=NULL,
                 only.last=TRUE,
                 output="pending_update_network",
                 verbose=verbose,
-                offset.coef=offset.coef)
+                offset.coef=NVL(offset.coef,control$init[model.initial$etamap$offsettheta]))
       if(verbose) message("Finished SAN run.")
     }else{
       TARGET_STATS <- nw
@@ -669,7 +670,7 @@ ergm <- function(formula, response=NULL,
   
   MPLE.is.MLE <- (proposal$reference$name=="Bernoulli"
                   && is.dyad.independent(model.initial)
-                  && !is.curved(formula, response=response, term.options=control$term.options)
+                  && !is.curved(formula, response=response, basis=nw, term.options=control$term.options)
                   && !control$force.main
                   && is.dyad.independent(proposal$arguments$constraints,
                                          proposal.obs$arguments$constraints))
@@ -729,18 +730,14 @@ ergm <- function(formula, response=NULL,
                                 verbose=if(MCMCflag) FALSE else verbose, response=response,
                                 ...)
 
-  # TODO: this may also work for CD initial method.
-  if(control$init.method=="MPLE" &&
-     control$MPLE.singular.rcond!=0 &&
-     is.matrix(initialfit$covar) &&
-     (rc <- rcond(initialfit$covar[!model.initial$etamap$offsettheta,!model.initial$etamap$offsettheta,drop=FALSE])) < control$MPLE.singular.rcond){
-    msg <- paste0("MPLE variance-covariance matrix appears to be singular or nearly so (reciprocal condition number = ", rc, "). This may indicate that the model is nonidentifiable.")
-    switch(control$MPLE.singular,
-           error = stop(msg),
-           warning = warning(msg, immediate.=TRUE), # Warn immediately, so the user gets the warning before the MCMC starts.
-           message = message(msg)
-           )
-  }
+  switch(control$init.method,
+         MPLE = NVL3(initialfit$xmat.full, check_nonidentifiability(., initialfit$coef, model.initial,
+                                         tol = control$MPLE.nonident.tol, type="covariates",
+                                         action = control$MPLE.nonident)),
+         CD = NVL3(initialfit$sample, check_nonidentifiability(as.matrix(.), initialfit$coef, model.initial,
+                                       tol = control$MPLE.nonident.tol, type="statistics",
+                                       action = control$MPLE.nonident))
+         )
 
   if (!MCMCflag){ # Just return initial (non-MLE) fit and exit.
     message("Stopping at the initial estimate.")
@@ -768,7 +765,7 @@ ergm <- function(formula, response=NULL,
     if(eval.loglik) initialfit$null.lik <- logLikNull.ergm(initialfit, verbose=verbose)
     if(any(!model.initial$etamap$offsettheta) && eval.loglik){
       message("Evaluating log-likelihood at the estimate. ",appendLF=FALSE)
-      initialfit<-logLik(initialfit, add=TRUE, control=control$loglik.control, verbose=verbose)
+      initialfit<-logLik(initialfit, add=TRUE, control=control$loglik, verbose=verbose)
       message("")
     }
     return(initialfit)
@@ -862,7 +859,7 @@ ergm <- function(formula, response=NULL,
   
   if(eval.loglik){
     message("Evaluating log-likelihood at the estimate. ", appendLF=FALSE)
-    mainfit<-logLik(mainfit, add=TRUE, control=control$loglik.control, verbose=verbose)
+    mainfit<-logLik(mainfit, add=TRUE, control=control$loglik, verbose=verbose)
   }
     
   if (MCMCflag) {

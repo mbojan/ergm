@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 #' RLE-Compressed Boolean Dyad Matrix
 #'
@@ -28,6 +28,7 @@
 #' stopifnot(length(big)==50000^2)
 #'
 #' @seealso [as.rlebdm.ergm_conlist()]
+#' @import rle
 #' @import statnet.common
 #' @keywords internal
 #' @export
@@ -176,67 +177,25 @@ print.rlebdm <- function(x, compact=TRUE, ...){
 }
 
 #' @rdname rlebdm
+#' @param e1,e2 arguments to the unary (`e1`) or the binary (`e1` and `e2`) operators.
+#'
+#' @note The arithmetic operators are mathematical functions are
+#'   implemented for the [`Ops`] and the [`Math`] group generics and
+#'   therefore work for almost all of them automatically. To preserve
+#'   the integrity of the data structure, the results are cast to
+#'   logical before return.
+#'
 #' @export
-`!.rlebdm` <- function(x){
+Ops.rlebdm <- function(e1, e2){
+  o <- NextMethod()
+  rlebdm(o, attr(e1, "n"))
+}
+
+#' @rdname rlebdm
+#' @export
+Math.rlebdm <- function(x, ...){
   o <- NextMethod()
   rlebdm(o, attr(x, "n"))
-}
-
-#' @rdname rlebdm
-#' @param e1,e2 arguments to the binary operations.
-#' @export
-`|.rlebdm` <- function(e1, e2){
-  o <- NextMethod()
-  rlebdm(o, attr(e1, "n"))
-}
-
-#' @rdname rlebdm
-#' @export
-`&.rlebdm` <- function(e1, e2){
-  o <- NextMethod()
-  rlebdm(o, attr(e1, "n"))
-}
-
-#' @rdname rlebdm
-#' @export
-`<.rlebdm` <- function(e1, e2){
-  o <- NextMethod()
-  rlebdm(o, attr(e1, "n"))
-}
-
-#' @rdname rlebdm
-#' @export
-`>.rlebdm` <- function(e1, e2){
-  o <- NextMethod()
-  rlebdm(o, attr(e1, "n"))
-}
-
-#' @rdname rlebdm
-#' @export
-`<=.rlebdm` <- function(e1, e2){
-  o <- NextMethod()
-  rlebdm(o, attr(e1, "n"))
-}
-
-#' @rdname rlebdm
-#' @export
-`>=.rlebdm` <- function(e1, e2){
-  o <- NextMethod()
-  rlebdm(o, attr(e1, "n"))
-}
-
-#' @rdname rlebdm
-#' @export
-`==.rlebdm` <- function(e1, e2){
-  o <- NextMethod()
-  rlebdm(o, attr(e1, "n"))
-}
-
-#' @rdname rlebdm
-#' @export
-`!=.rlebdm` <- function(e1, e2){
-  o <- NextMethod()
-  rlebdm(o, attr(e1, "n"))
 }
 
 #' Extract dyad-level ERGM constraint information into an [`rlebdm`] object
@@ -316,7 +275,7 @@ as.rlebdm.ergm_conlist <- function(x, constraints.obs = NULL, which = c("free", 
 #'   `rlebdm` by merging successive runs with identical values.
 #' @export
 compress.rlebdm <- function(x, ...){
-  y <- NextMethod("compress")
+  y <- NextMethod()
   structure(y, n=attr(x, "n"), class=class(x))
 }
 

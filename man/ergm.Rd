@@ -23,7 +23,8 @@ ergm(
   estimate = c("MLE", "MPLE", "CD"),
   control = control.ergm(),
   verbose = FALSE,
-  ...
+  ...,
+  basis = ergm.getnetwork(formula)
 )
 
 is.ergm(object)
@@ -109,7 +110,7 @@ sampling to evaluate the log-likelihoood associated with the
 fit. Has no effect for dyad-independent models.
 Since bridge sampling takes additional time, setting to FALSE may
 speed performance if likelihood values (and likelihood-based
-values like AIC and BIC) are not needed. Can be set globally via \code{option(ergm.eval.loglik=...)}, which is set to \code{TRUE} when the package is loaded.
+values like AIC and BIC) are not needed. Can be set globally via \code{option(ergm.eval.loglik=...)}, which is set to \code{TRUE} when the package is loaded. (See \code{\link[=ergm-options]{options?ergm}}.)
 }}
 
 \item{estimate}{{If "MPLE," then the maximum pseudolikelihood estimator
@@ -121,18 +122,18 @@ likelihood calculation even when the MLE and MPLE are the same, see the
 the Monte-Carlo contrastive divergence estimate is returned. )
 }}
 
-\item{control}{{A list of control parameters for algorithm
-tuning. Constructed using \code{\link{control.ergm}}.
-}}
+\item{control}{A list of control parameters for algorithm
+tuning. Constructed using \code{\link{control.ergm}}.}
 
-\item{verbose}{{logical; if this is
-\code{TRUE}, the program will print out additional
-information, including goodness of fit statistics.
-}}
+\item{verbose}{A \code{logical} or an integer: if this is
+\code{TRUE}/\code{1}, the program will print out additional
+information about the progress of estimation and
+simulation. Higher values produce more verbosity.}
 
-\item{\dots}{{Additional
-arguments, to be passed to lower-level functions.
-}}
+\item{\dots}{Additional
+arguments, to be passed to lower-level functions.}
+
+\item{basis}{a value (usually a \code{\link{network}}) to override the LHS of the formula.}
 
 \item{object}{{an \code{ergm} object.}}
 
@@ -413,7 +414,7 @@ Handcock, M. S. (2003)
 Working Paper \#39,
 Center for Statistics and the Social Sciences,
 University of Washington.
-\url{https://www.csss.washington.edu/Papers/wp39.pdf}
+\url{https://www.csss.washington.edu/research/working-papers/assessing-degeneracy-statistical-models-social-networks}
 
 Handcock MS (2003b).
 \pkg{degreenet}: Models for Skewed Count Distributions Relevant

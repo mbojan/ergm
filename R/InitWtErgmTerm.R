@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 
 binary_wrap <- function(InitFun, nw, a, valued_args, ddd, namemap = identity, cnmap = identity){
@@ -368,8 +368,8 @@ InitWtErgmTerm.nodeisqrtcovar<-function (nw, arglist, response, ...) {
   a <- check.ErgmTerm(nw, arglist, directed = TRUE, nonnegative=TRUE, response=response,
                       varnames = c(),
                       vartypes = c(),
-                      defaultvalues = list(FALSE),
-                      required = c(FALSE))
+                      defaultvalues = list(),
+                      required = c())
   ### Process the arguments
 
   list(name="nodeisqrtcovar",

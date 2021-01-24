@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution
  *
- *  Copyright 2003-2019 Statnet Commons
+ *  Copyright 2003-2020 Statnet Commons
  */
 #include "wtSAN.h"
 
@@ -300,7 +300,7 @@ MCMCStatus WtSANMetropolisHastings (WtMHProposal *MHp,
     }
     
     if(fVerbose>=5){
-      Rprintf("log acceptance probability: %f\n", ip - offsetcontrib);
+      Rprintf("log acceptance probability: %f\n", -ip/tau[0] + offsetcontrib);
     }
     
     /* if we accept the proposed network */

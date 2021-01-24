@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 #========================================================================
 # This file contains the following 2 functions for simulating ergms
@@ -68,14 +68,7 @@
 #'   model, along with a coefficient of 0, so their statistics are
 #'   returned. An [`ergm_model`] objectcan be passed as well.
 #'
-#' @param basis An optional network data object to start the
-#' Markov chain.  If omitted, the default is the left-hand-side of the
-#' \code{formula}.  If neither a left-hand-side nor a \code{basis} is present,
-#' an error results because the characteristics of the network (e.g., size and
-#' directedness) must be specified.  The \code{ergm} package provides support
-#' for \code{basis} arguments of class \code{\link[network]{network}} and 
-#' of class \code{\link[ergm]{pending_update_network}}; other packages may
-#' extend support to other classes.
+#' @template basis
 #' 
 #' @param statsonly Logical: If TRUE, return only the network statistics, not
 #' the network(s) themselves. Deprecated in favor of `output=`.
@@ -84,9 +77,19 @@
 #' either way, but if the model is curved, the score estimating function values
 #' (3.1) by Hunter and Handcock (2006) are returned instead.
 #' 
-#' @param output Character, one of `"network"` (default), `"stats"`,
-#'   `"edgelist"`, or `"pending_update_network"`: determines the
-#'   output format. Partial matching is performed.
+#' @param output Normally character, one of `"network"` (default),
+#'   `"stats"`, `"edgelist"`, or `"pending_update_network"` to
+#'   determine the output format. Partial matching is
+#'   performed.
+#'
+#'   Alternatively, a function with prototype
+#'   `function(pending_update_network, chain, iter, ...)` that is
+#'   called for each returned network, and its return value, rather
+#'   than the network itself, is stored. This can be used to, for
+#'   example, store the simulated networks to disk without storing
+#'   them in memory or compute network statistics not implemented
+#'   using the ERGM API, without having to store the networks
+#'   themselves.
 #'
 #' @param simplify Logical: If `TRUE` the output is "simplified":
 #'   sampled networks are returned in a single list, statistics from
@@ -219,12 +222,22 @@
 #'             monitor=~triangles, output="stats",
 #'             control=control.simulate.ergm(MCMC.burnin=1000, MCMC.interval=100))
 #' g.sim
+#'
+#' # Custom output: store the edgecount (computed in R), iteration index, and chain index.
+#' output.f <- function(x, iter, chain, ...){
+#'   list(nedges = network.edgecount(as.network(x)),
+#'        chain = chain, iter = iter)
+#' }
+#' g.sim <- simulate(gest, nsim=3,
+#'             output=output.f, simplify=FALSE,
+#'             control=control.simulate.ergm(MCMC.burnin=1000, MCMC.interval=100))
+#' unclass(g.sim)
 #' @name simulate.ergm
 #' @importFrom stats simulate
 #' @aliases simulate.formula.ergm
 #' @export
-simulate.formula <- function(object, nsim=1, seed=NULL, ...){
-  simulate_formula(object, nsim=nsim, seed=seed, ...)
+simulate.formula_lhs_network <- function(object, nsim=1, seed=NULL, ...){
+  simulate_formula(object, nsim=nsim, seed=seed, ..., basis=attr(object, ".Basis"))
 }
 
 #' @rdname simulate.ergm
@@ -252,7 +265,7 @@ simulate_formula <- function(object, ..., basis=eval_lhs.formula(object)) {
                              verbose=FALSE, ..., basis=eval_lhs.formula(object), do.sim=TRUE) {
   #' @importFrom statnet.common check.control.class
   check.control.class("simulate.formula", myname="ERGM simulate.formula")
-  control.toplevel(..., myname="simulate.formula")
+  control.toplevel("simulate.formula", ...)
 
   if(!missing(statsonly)){
     .Deprecate_once(msg=paste0("Use of ",sQuote("statsonly=")," argument has been deprecated. Use ",sQuote("output='stats'")," instead."))
@@ -319,6 +332,11 @@ simulate_formula <- function(object, ..., basis=eval_lhs.formula(object)) {
 #' @rdname simulate.ergm
 #'
 #' @export
+simulate.formula_lhs_pending_update_network <- simulate.formula_lhs_network
+
+#' @rdname simulate.ergm
+#'
+#' @export
 simulate_formula.pending_update_network <- .simulate_formula.network
 
 #' @rdname simulate.ergm
@@ -342,12 +360,17 @@ simulate.ergm_model <- function(object, nsim=1, seed=NULL,
                                 verbose=FALSE, ...){
 
   check.control.class(c("simulate.formula", "simulate.ergm_model"), myname="simulate.ergm_model")
-  control.toplevel(..., myname="simulate.formula")
+  control.toplevel("simulate.formula", ...)
   
   if(!is.null(monitor) && !is(monitor, "ergm_model")) stop("ergm_model method for simulate() requires monitor= argument of class ergm_model or NULL.")
   if(is.null(basis)) stop("ergm_model method for simulate() requires the basis= argument for the initial state of the simulation.")
 
-  output <- match.arg(output)
+  if(is.character(output))
+    output <- match.arg(output)
+  else{
+    output.f <- output
+    output <- "function"
+  }
 
   # Backwards-compatibility code:
   if("theta0" %in% names(list(...))){
@@ -445,7 +468,8 @@ simulate.ergm_model <- function(object, nsim=1, seed=NULL,
                           switch(output,
                                  pending_update_network=z$networks,
                                  network=lapply(z$networks, as.network),
-                                 edgelist=lapply(z$networks, as.edgelist)
+                                 edgelist=lapply(z$networks, as.edgelist),
+                                 "function"=mapply(output.f, z$networks, chain=seq_along(z$networks), iter=i, SIMPLIFY=FALSE)
                                  ),
                           SIMPLIFY=FALSE)
       
@@ -512,7 +536,7 @@ simulate.ergm <- function(object, nsim=1, seed=NULL,
                           control=control.simulate.ergm(),
                           verbose=FALSE, ...) {
   check.control.class(c("simulate.ergm","simulate.formula"), "simulate.ergm")
-  control.toplevel(...)
+  control.toplevel("simulate.ergm", ...)
   control.transfer <- c("MCMC.burnin", "MCMC.interval", "MCMC.prop.weights", "MCMC.prop.args", "MCMC.packagenames", "MCMC.init.maxedges","parallel","parallel.type","parallel.version.check","term.options")
   for(arg in control.transfer)
     if(is.null(control[[arg]]))

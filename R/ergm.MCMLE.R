@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 ############################################################################
 # The <ergm.MCMLE> function provides one of the styles of maximum
@@ -263,6 +263,11 @@ ergm.MCMLE <- function(init, nw, model,
     esteq <- ergm.estfun(statsmatrix, mcmc.init, model)
     if(isTRUE(all.equal(apply(esteq,2,stats::sd), rep(0,ncol(esteq)), check.names=FALSE))&&!all(esteq==0))
       stop("Unconstrained MCMC sampling did not mix at all. Optimization cannot continue.")
+
+    check_nonidentifiability(esteq, NULL, model,
+                             tol = control$MCMLE.nonident.tol, type="statistics",
+                             action = control$MCMLE.nonident)
+
     esteq.obs <- if(obs) ergm.estfun(statsmatrix.obs, mcmc.init, model) else NULL
 
     # Update the interval to be used.

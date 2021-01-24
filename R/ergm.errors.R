@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 #' Sensible error and warning messages by `ergm` initializers
 #'
@@ -48,7 +48,7 @@ ergm_Init_inform <- function(..., default.loc=NULL){
 }
 
 format.traceback <- function(x){
-  if(nrow(x)==0) return(NULL)
+  if(EVL(nrow(x)==0,TRUE)) return(NULL)
   x <- x[nrow(x):1,]
   x <- paste0(ifelse(x$valued,"valued ", ""),
               x$type, " ",

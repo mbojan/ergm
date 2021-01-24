@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 ## A function to compute and return the log-likelihood of an ERGM MLE.
 
@@ -81,7 +81,7 @@ logLik.ergm<-function(object, add=FALSE, force.reeval=FALSE, eval.loglik=add || 
   # Then, we need to recalculate...
   
   check.control.class("logLik.ergm", "logLik.ergm")
-  control.toplevel(...)
+  control.toplevel("logLik.ergm", ...)
  
   control.transfer <- c("MCMC.burnin", "MCMC.interval", "MCMC.prop.weights",
 "MCMC.prop.args", "MCMC.packagenames", "MCMC.init.maxedges", "MCMC.samplesize",
@@ -166,7 +166,7 @@ logLikNull <- function(object, ...) UseMethod("logLikNull")
 logLikNull.ergm <- function(object, control=control.logLik.ergm(), ...){
   check.control.class("logLik.ergm", "logLikNull.ergm")
 
-  control.toplevel(..., myname="logLik.ergm")
+  control.toplevel("logLik.ergm", ...)
   if(!is.null(object$null.lik)) return(object$null.lik)
   
   nobs <- nobs(object,...)

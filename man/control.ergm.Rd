@@ -15,10 +15,10 @@ control.ergm(
   resume = NULL,
   MPLE.max.dyad.types = 1e+06,
   MPLE.samplesize = .Machine$integer.max,
-  init.MPLE.samplesize = function(d, e) max(e, 40) * 8,
+  init.MPLE.samplesize = function(d, e) max(sqrt(d), e, 40) * 8,
   MPLE.type = c("glm", "penalized"),
-  MPLE.singular = c("warning", "message", "error"),
-  MPLE.singular.rcond = 1e-10,
+  MPLE.nonident = c("warning", "message", "error"),
+  MPLE.nonident.tol = 1e-10,
   MCMC.prop.weights = "default",
   MCMC.prop.args = list(),
   MCMC.interval = 1024,
@@ -39,7 +39,7 @@ control.ergm(
   MCMC.packagenames = c(),
   SAN.maxit = 4,
   SAN.nsteps.times = 8,
-  SAN.control = control.san(term.options = term.options, SAN.maxit = SAN.maxit,
+  SAN = control.san(term.options = term.options, SAN.maxit = SAN.maxit,
     SAN.prop.weights = MCMC.prop.weights, SAN.prop.args = MCMC.prop.args,
     SAN.init.maxedges = MCMC.init.maxedges, SAN.max.maxedges = MCMC.max.maxedges,
     SAN.nsteps = MCMC.burnin * SAN.nsteps.times, SAN.samplesize = MCMC.samplesize,
@@ -82,6 +82,8 @@ control.ergm(
   MCMLE.steplength.min = 1e-04,
   MCMLE.effectiveSize.interval_drop = 2,
   MCMLE.save_intermediates = NULL,
+  MCMLE.nonident = c("warning", "message", "error"),
+  MCMLE.nonident.tol = 1e-10,
   SA.phase1_n = NULL,
   SA.initial_gain = NULL,
   SA.nsubphases = 4,
@@ -120,7 +122,7 @@ control.ergm(
   CD.steplength.maxit = 25,
   CD.steplength.min = 1e-04,
   CD.steplength.parallel = c("observational", "always", "never"),
-  loglik.control = control.logLik.ergm(),
+  loglik = control.logLik.ergm(),
   term.options = NULL,
   seed = NULL,
   parallel = 0,
@@ -232,15 +234,15 @@ uses the bias-reduced method of Firth (1993) as originally implemented by
 Meinhard Ploner, Daniela Dunkler, Harry Southworth, and Georg Heinze in the
 "logistf" package.}
 
-\item{MPLE.singular, MPLE.singular.rcond}{A preliminary
-nonidentifiability/multicollinearity diagnostic. If
-\code{MPLE.singular.rcond > 0}, test the estimated MPLE
-variance-covariance matrix for being approximately singular by
-checking if its reciprocal condition number (\code{\link[=rcond]{rcond()}}) is less
-than \code{MPLE.singular.rcond}. This is often (not always) indicative
-of a non-identifiable (multicollinear) model. If singular,
-depending on \code{MPLE.singular} issue a warning, an error, or a
-message.}
+\item{MPLE.nonident, MPLE.nonident.tol, MCMLE.nonident, MCMLE.nonident.tol}{A rudimentary nonidentifiability/multicollinearity diagnostic. If
+\code{MPLE.nonident.tol > 0}, test the MPLE covariate matrix or the CD
+statistics matrix has linearly dependent columns via \link[=qr]{QR decomposition} with tolerance \code{MPLE.nonident.tol}. This is
+often (not always) indicative of a non-identifiable
+(multicollinear) model. If nonidentifiable, depending on
+\code{MPLE.nonident} issue a warning, an error, or a message
+specifying the potentially redundant statistics. The
+corresponding \verb{MCMLE.*} arguments provide a similar diagnostic
+for the unconstrained MCMC sample's estimating functions.}
 
 \item{MCMC.prop.weights}{Specifies the proposal
 distribution used in the MCMC Metropolis-Hastings algorithm.  Possible
@@ -279,7 +281,7 @@ network statistics.  This matrix should have \code{MCMC.samplesize} rows.
 This matrix can be used directly by the \code{coda} package to assess MCMC
 convergence.}
 
-\item{MCMC.runtime.traceplot}{Logical: If TRUE, plot traceplots of the MCMC
+\item{MCMC.runtime.traceplot}{Logical: If \code{TRUE}, plot traceplots of the MCMC
 sample after every MCMC MLE iteration.}
 
 \item{MCMC.init.maxedges, MCMC.max.maxedges}{These parameters
@@ -308,9 +310,9 @@ to obtain a network with statistics close to those specified.}
 \item{SAN.nsteps.times}{Multiplier for \code{SAN.nsteps} relative to
 \code{MCMC.burnin}. This lets one control the amount of SAN burn-in
 (arguably, the most important of SAN parameters) without overriding the
-other SAN.control defaults.}
+other \code{SAN} defaults.}
 
-\item{SAN.control}{Control arguments to \code{\link{san}}.  See
+\item{SAN}{Control arguments to \code{\link{san}}.  See
 \code{\link{control.san}} for details.}
 
 \item{MCMLE.termination}{The criterion used for terminating MCMLE
@@ -542,9 +544,9 @@ optimizer. These have the same meaning as their \verb{MCMLE.*} and
 Note that only the Hotelling's stopping criterion is implemented
 for CD.}
 
-\item{loglik.control}{See \code{\link{control.ergm.bridge}}}
+\item{loglik}{See \code{\link{control.ergm.bridge}}}
 
-\item{term.options}{A list of additional arguments to be passed to term initializers. It can also be set globally via \code{option(ergm.term=list(...))}.}
+\item{term.options}{A list of additional arguments to be passed to term initializers. See \code{\link[=term.options]{? term.options}}.}
 
 \item{seed}{Seed value (integer) for the random number generator.  See
 \code{\link[base]{set.seed}}.}

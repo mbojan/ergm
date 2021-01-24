@@ -5,9 +5,8 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
-context("test-term-b12factor.R")
 
 bipnet<-network.initialize(4,bipartite=2,directed=FALSE)
 add.edges(bipnet,tail=c(1),head=c(4))

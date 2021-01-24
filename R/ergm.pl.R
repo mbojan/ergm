@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 
 #' @rdname ergm.mple
@@ -14,25 +14,20 @@
 #'   \code{ergm.mple} for the regression rountines that are used to
 #'   find the MPLE estimated ergm. It should not be called directly by
 #'   the user.
-#' @param theta.offset a logical vector specifying which of the model
-#'   coefficients are offset, i.e. fixed
-#' @return \code{ergm.pl} returns a list containing: \itemize{ \item
-#'   xmat : the compressed and possibly sampled matrix of change
-#'   statistics
-#' \item zy : the corresponding vector of responses,
+#'
+#' @param theta.offset a numeric vector of length equal to the number
+#'   of statistics of the model, specifying (positionally) the
+#'   coefficients of the offset statistics; elements corresponding to
+#'   free parameters are ignored.
+#'
+#' @return \code{ergm.pl} returns a list containing: \itemize{ 
+#' \item `xmat` : the compressed and possibly sampled matrix of change statistics
+#' \item `xmat.full` : as `xmat` but with offset terms
+#' \item `zy` : the corresponding vector of responses,
 #'   i.e. tie values
-#' \item foffset : ??
-#' \item wend : the vector of
-#'   weights for 'xmat' and 'zy'
-#' \item numobs : the number of dyads
-#'  
-#' \item
-#'   theta.offset : a numeric vector whose ith entry tells whether the
-#'   the ith curved coefficient?? was offset/fixed; -Inf implies the
-#'   coefficient was fixed, 0 otherwise; if the model hasn't any
-#'   curved terms, the first entry of this vector is one of
-#'   log(Clist$nedges/(Clist$ndyads-Clist$nedges))
-#'   log(1/(Clist$ndyads-1)) depending on 'Clist$nedges' }
+#' \item `foffset` : combined effect of offset terms
+#' \item `wend` : the vector of weights for `xmat` and `zy`
+#' \item `numobs` : the number of dyads}
 #' @keywords internal
 #' @export
 ergm.pl<-function(nw, fd, m, theta.offset=NULL,
@@ -46,9 +41,13 @@ ergm.pl<-function(nw, fd, m, theta.offset=NULL,
   elfd <- as.rlebdm(el) & fd
   e <- sum(elfd)
 
-  maxNumDyadTypes <- min(if(is.function(control$MPLE.max.dyad.types)) control$MPLE.max.dyad.types(d=d, e=e) else control$MPLE.max.dyad.types,
-                         d)
+  maxNumDyadTypes <- as.integer(min(if(is.function(control$MPLE.max.dyad.types)) control$MPLE.max.dyad.types(d=d, e=e) else control$MPLE.max.dyad.types,
+                         1.05*d)) # a little larger than d so the hash table doesn't bog down
   maxDyads <- if(is.function(control$MPLE.samplesize)) control$MPLE.samplesize(d=d, e=e) else control$MPLE.samplesize
+
+  if(as.double(maxNumDyadTypes)*nparam(m, canonical=TRUE) > .Machine$integer.max) {
+    stop("The maximum number of unique dyad types times the number of statistics exceeds 32 bit limits, so the MPLE cannot proceed; try reducing either MPLE.max.dyad.types or the number of terms in the model.")
+  }
 
   z <- .C("MPLE_wrapper",
           as.integer(Clist$tails), as.integer(Clist$heads),
@@ -132,6 +131,8 @@ ergm.pl<-function(nw, fd, m, theta.offset=NULL,
     cbind(sapply(seq_len(nrow(A)), function(i) sum(V * A[i,], na.rm=TRUE)))
   }
 
+  xmat.full <- xmat
+
   if(any(m$etamap$offsettheta)){
     if(any(is.na(theta.offset[m$etamap$offsettheta]))){
       stop("Offset terms without offset coefficients specified!")
@@ -151,15 +152,8 @@ ergm.pl<-function(nw, fd, m, theta.offset=NULL,
     foffset <- foffset[is.finite(foffset)]
   }else{
     foffset <- rep(0, length=length(zy))
-    theta.offset <- rep(0, length=Clist$nstats)
-    if(e>0){
-      theta.offset[1] <- log(e/(d-e))
-    }else{
-      theta.offset[1] <- log(1/(d-1))
-    }
-    names(theta.offset) <- param_names(m,canonical=TRUE)
   }
   
   list(xmat=xmat, zy=zy, foffset=foffset, wend=wend, numobs=round(sum(wend)),
-       theta.offset=theta.offset)
+       xmat.full=xmat.full)
 }

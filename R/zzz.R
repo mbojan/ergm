@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 .onAttach <- function(lib, pkg){
   #' @importFrom statnet.common statnetStartupMessage
@@ -21,16 +21,9 @@
   # . is used as a placeholder by stantet.common::NVL3().
   utils::globalVariables(".")
 
-  # Set default options, but don't clobber if already set.
-  OPTIONS <- list(ergm.eval.loglik=TRUE,
+  default_options(ergm.eval.loglik=TRUE,
                   ergm.loglik.warn_dyads=TRUE,
                   ergm.cluster.retries=5)
-  current <- names(options())
-  for(opt in names(OPTIONS)){
-    if(! opt%in%current){
-      do.call(options, OPTIONS[opt])
-    }
-  }
 
   .RegisterProposals()
 }

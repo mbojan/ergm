@@ -1,3 +1,12 @@
+#  File R/predict.ergm.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, https://statnet.org .
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  https://statnet.org/attribution
+#
+#  Copyright 2003-2020 Statnet Commons
+#######################################################################
 #' ERGM-based tie probabilities
 #' 
 #' @description 
@@ -26,7 +35,7 @@
 #'   scale of linear predictor. This is similar to `type` argument of [predict.glm()].
 #' @param output character, type of object returned. Defaults to `"data.frame"`.
 #'   See section Value below.
-#' @param ... other arguments passed to/from other methods. For [ergm.formula()] if
+#' @param ... other arguments passed to/from other methods. For the `predict.formula` method, if
 #'   `conditional=TRUE` arguments are passed to [ergmMPLE()]. If `conditional=FALSE` arguments
 #'   are passed to [simulate_formula()].
 #'
@@ -67,12 +76,14 @@ predict.formula <- function(object, theta,
                             nsim = 100,
                             output=c("data.frame", "matrix"), ...) {
   stopifnot(is.numeric(theta))
+  theta <- statnet.common::deInf(theta)
   output <- match.arg(output)
   type <- match.arg(type)
   
   # Transform extended ergmMPLE() output to matrix with 0s on the diagonal
   .df_to_matrix <- function(d) {
-    res <- tapply(predmat[,"p"], list(predmat[,"tail"], predmat[,"head"]), identity)
+    N <- max(predmat[,c("tail", "head")])
+    res <- replace(matrix(NA, N, N), as.matrix(d[,c("tail", "head")]), d[,"p"])
     diag(res) <- 0
     res
   }
@@ -99,16 +110,17 @@ predict.formula <- function(object, theta,
   }
   
   predmat <- ergmMPLE(
-    update(object, . ~ . + indices),
+    statnet.common::nonsimp_update.formula(object, . ~ indices + . ),
     output = "matrix",
+    control = control.ergm(MPLE.max.dyad.types = Inf), # reduced to number of informative dyads in ergm.pl
     ...
   )$predictor
   stopifnot(length(theta) == (ncol(predmat)-2))
   # Compute conditional Ps and cbind to ergmMPLE() output
   predmat <- cbind(predmat, p=drop(switch(
     type,
-    link = predmat[,seq(1, length(theta)), drop=FALSE] %*% theta,
-    response = 1 / (1 + exp( - predmat[,seq(1, length(theta)), drop=FALSE] %*% theta))
+    link = predmat[,-(1:2), drop=FALSE] %*% theta,
+    response = 1 / (1 + exp( - predmat[,-(1:2), drop=FALSE] %*% theta))
   ) ) )
   # Format output
   switch(

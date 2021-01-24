@@ -101,14 +101,14 @@ specifying additional arguments to proposal.}
 statistic functions in addition to those autodetected. This argument should
 not be needed outside of very strange setups.}
 
-\item{MCMC.runtime.traceplot}{Logical: If TRUE, plot traceplots of the MCMC
-sample after every MCMC MLE iteration.}
+\item{MCMC.runtime.traceplot}{Logical: If \code{TRUE}, plot traceplots of the MCMC
+sample.}
 
 \item{network.output}{R class with which to output networks. The options are
 "network" (default) and "edgelist.compressed" (which saves space but only
 supports networks without vertex attributes)}
 
-\item{term.options}{A list of additional arguments to be passed to term initializers. It can also be set globally via \code{option(ergm.term=list(...))}.}
+\item{term.options}{A list of additional arguments to be passed to term initializers. See \code{\link[=term.options]{? term.options}}.}
 
 \item{parallel}{Number of threads in which to run the sampling. Defaults to
 0 (no parallelism). See the entry on \link[=ergm-parallel]{parallel processing}

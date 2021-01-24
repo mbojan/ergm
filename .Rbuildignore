@@ -13,3 +13,5 @@ appveyor.yml
 .*\.rej$
 .gdb_history
 ^revdep$
+^.github$
+^man-roxygen$

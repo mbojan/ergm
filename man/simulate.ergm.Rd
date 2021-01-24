@@ -2,16 +2,17 @@
 % Please edit documentation in R/simulate.ergm.R
 \name{simulate.ergm}
 \alias{simulate.ergm}
-\alias{simulate.formula}
+\alias{simulate.formula_lhs_network}
 \alias{simulate.formula.ergm}
 \alias{simulate_formula}
 \alias{.simulate_formula.network}
 \alias{simulate_formula.network}
+\alias{simulate.formula_lhs_pending_update_network}
 \alias{simulate_formula.pending_update_network}
 \alias{simulate.ergm_model}
 \title{Draw from the distribution of an Exponential Family Random Graph Model}
 \usage{
-\method{simulate}{formula}(object, nsim = 1, seed = NULL, ...)
+\method{simulate}{formula_lhs_network}(object, nsim = 1, seed = NULL, ...)
 
 simulate_formula(object, ..., basis = eval_lhs.formula(object))
 
@@ -35,6 +36,8 @@ simulate_formula(object, ..., basis = eval_lhs.formula(object))
   basis = eval_lhs.formula(object),
   do.sim = TRUE
 )
+
+\method{simulate}{formula_lhs_pending_update_network}(object, nsim = 1, seed = NULL, ...)
 
 \method{simulate_formula}{pending_update_network}(
   object,
@@ -115,14 +118,7 @@ algorithm.}
 
 \item{\dots}{Further arguments passed to or used by methods.}
 
-\item{basis}{An optional network data object to start the
-Markov chain.  If omitted, the default is the left-hand-side of the
-\code{formula}.  If neither a left-hand-side nor a \code{basis} is present,
-an error results because the characteristics of the network (e.g., size and
-directedness) must be specified.  The \code{ergm} package provides support
-for \code{basis} arguments of class \code{\link[network]{network}} and
-of class \code{\link[ergm]{pending_update_network}}; other packages may
-extend support to other classes.}
+\item{basis}{a value (usually a \code{\link{network}}) to override the LHS of the formula.}
 
 \item{coef}{Vector of parameter values for the model from which the sample
 is to be drawn.  If \code{object} is of class \code{ergm}, the default value
@@ -158,9 +154,19 @@ ERGM: if the model is non-curved, all non-offset statistics are returned
 either way, but if the model is curved, the score estimating function values
 (3.1) by Hunter and Handcock (2006) are returned instead.}
 
-\item{output}{Character, one of \code{"network"} (default), \code{"stats"},
-\code{"edgelist"}, or \code{"pending_update_network"}: determines the
-output format. Partial matching is performed.}
+\item{output}{Normally character, one of \code{"network"} (default),
+\code{"stats"}, \code{"edgelist"}, or \code{"pending_update_network"} to
+determine the output format. Partial matching is
+performed.
+
+Alternatively, a function with prototype
+\verb{function(pending_update_network, chain, iter, ...)} that is
+called for each returned network, and its return value, rather
+than the network itself, is stored. This can be used to, for
+example, store the simulated networks to disk without storing
+them in memory or compute network statistics not implemented
+using the ERGM API, without having to store the networks
+themselves.}
 
 \item{simplify}{Logical: If \code{TRUE} the output is "simplified":
 sampled networks are returned in a single list, statistics from
@@ -329,6 +335,16 @@ g.sim <- simulate(gest, nsim=10,
             monitor=~triangles, output="stats",
             control=control.simulate.ergm(MCMC.burnin=1000, MCMC.interval=100))
 g.sim
+
+# Custom output: store the edgecount (computed in R), iteration index, and chain index.
+output.f <- function(x, iter, chain, ...){
+  list(nedges = network.edgecount(as.network(x)),
+       chain = chain, iter = iter)
+}
+g.sim <- simulate(gest, nsim=3,
+            output=output.f, simplify=FALSE,
+            control=control.simulate.ergm(MCMC.burnin=1000, MCMC.interval=100))
+unclass(g.sim)
 }
 \seealso{
 \code{\link{ergm}}, \code{\link[network]{network}}

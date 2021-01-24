@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 #===================================================================================
 # This file contains the following 2 functions for creating the 'ergm_model' object
@@ -88,7 +88,7 @@ ergm_model <- function(formula, nw=NULL, response=NULL, silent=FALSE, role="stat
       args[[1]] <- as.name("list")
     }else args <- list()
     
-    termFun<-locate.InitFunction(term, paste0(termroot,"Term"), "ERGM term", env=formula.env)
+    termFun<-locate_prefixed_function(term, paste0(termroot,"Term"), "ERGM term", env=formula.env)
 
     termCall<-as.call(list(termFun, nw, args))
     

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 
 # parse the ergm-terms doc file to create structured data about each set of terms
@@ -215,12 +215,12 @@
     # check that there is a visable init function defined for the term
     # some terms have both valued an binary forms
     if ('valued'%in%term$categories){
-      if(!is.function(eval(locate.InitFunction(term$term.name, 'InitWtErgmTerm')))){
+      if(!is.function(eval(locate_prefixed_function(term$term.name, 'InitWtErgmTerm')))){
         stop('unable to locate an InitWtErgmTerm function defined for weighted term ',term$term.name,' in documentation')
       }
     } 
     if ('binary'%in%term$categories){
-      if(!is.function(eval(locate.InitFunction(term$term.name, 'InitErgmTerm')))){
+      if(!is.function(eval(locate_prefixed_function(term$term.name, 'InitErgmTerm')))){
         stop('unable to locate an InitErgmTerm function defined for term ',term$term.name,' in documentation')
       }
     }

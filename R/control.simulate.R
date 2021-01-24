@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 
 #' Auxiliary for Controlling ERGM Simulation
@@ -26,8 +26,8 @@
 #' typically is set to a fairly large number.
 #' @param MCMC.interval Number of proposals between sampled statistics.
 #' @param MCMC.init.maxedges Maximum number of edges expected in network.
-#' @param MCMC.runtime.traceplot Logical: If TRUE, plot traceplots of the MCMC
-#' sample after every MCMC MLE iteration.
+#' @param MCMC.runtime.traceplot Logical: If `TRUE`, plot traceplots of the MCMC
+#' sample.
 #' @param network.output R class with which to output networks. The options are
 #' "network" (default) and "edgelist.compressed" (which saves space but only
 #' supports networks without vertex attributes)

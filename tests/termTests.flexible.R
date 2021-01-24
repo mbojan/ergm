@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 
 library(ergm)
@@ -116,11 +116,19 @@ if (s.0 != 40139 || round(e.0$coef + .02376, 3) != 0) {
 
 # cycle, either
 num.tests=num.tests+1
+s.0 <- summary(samplike ~ cycle(2:6))
+e.0 <- ergm(samplike ~ cycle(2:6), estimate="MPLE")
+s.1 <- summary(samplike ~ cycle(3:7,semi=TRUE))
+e.1 <- ergm(samplike ~ cycle(3:7,semi=TRUE), estimate="MPLE")
 s.k <- summary(fmh~cycle(3:6))
 e.k <- ergm(fmh~cycle(c(4,6)), estimate="MPLE")
-if(!all(s.k==c(62,80,138,270)) ||
-    !all(round(e.k$coef+c(-.1615, .2083),3)==0)) {
- print(list(s.k=s.k,e.k=e.k))
+if(!all(s.0 == c(28, 39, 111, 260, 651)) ||
+   !all(round(coef(e.0), 3) == c(2.118, -0.539, 0.410, -0.022, -0.049)) || 
+   !all(s.1 == c(57, 216, 787, 2908, 10508)) ||
+   !all(round(coef(e.1), 3) == c(-0.009, 0.144, 0.070, -0.031, 0.001)) || 
+   !all(s.k==c(62,80,138,270)) ||
+   !all(round(e.k$coef+c(-.1615, .2083),3)==0)) {
+ print(list(s.0=s.0, e.0=e.0, s.1=s.1, e.1=e.1, s.k=s.k, e.k=e.k))
  stop("Failed cycle test")
 } else {
  num.passed.tests=num.passed.tests+1
@@ -524,11 +532,10 @@ s.ab <- summary(bipnw ~ nodemix("Letter", levels2=TRUE))
 e.ab <- ergm(bipnw ~ nodemix(function(x) x %v% "Letter", levels2=-(2:6)))
 s.ab2 <- summary(fmh ~ nodemix("Race", base=1))
 e.ab2 <- ergm(samplike ~ nodemix(~Trinity, base=(3:9)))                
-if (!all(s.a == c(75, 0, 33, 0, 2, 23, 1, 4, 7, 9, 1,
+if (!all(s.a == c(0, 33, 0, 2, 23, 1, 4, 7, 9, 1,
                   2, 6, 1, 17, 1, 1, 4, 5, 5, 6)) ||
-    !all(round(e.a$coef - c(0.1910552, -3.2958369, -2.1747517, -2.5649494,
-                           1.6094379, -3.2958369, -1.4916549, -1.0986123,
-                            0.9162907), 3) == 0) ||
+    !all(round(coef(e.a) - c(-3.2958369, -2.1747517, -2.5649494, 1.6094379,
+                             -3.2958369,  -1.4916549, -1.0986123, 0.9162907), 3) == 0) ||
     !all(s.ab==c(9,8,8,7,7,5,4,6,6)) ||
     !all(round(e.ab$coef+c(3.497, 4.431, 3.989, 3.989),3)==0) ||
     !all(s.ab2==c(8,53,13,41,46,0,1,0,0,5,22,10,0,4)) ||

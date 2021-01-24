@@ -46,7 +46,7 @@ exits.}
 
 \item{\dots}{not currently used}
 
-\item{clinfo}{a \code{\link{cluster}} or another object.}
+\item{clinfo}{a \code{\link[parallel:makeCluster]{cluster}} or another object.}
 }
 \description{
 For estimation that require MCMC, \code{\link[=ergm-package]{ergm}}
@@ -115,10 +115,7 @@ below.
 \code{ergm} will detect the number of nodes in the cluster, and
 use all of them for MCMC sampling. This method is flexible: it
 will accept any cluster type that is compatible with \code{snow}
-or \code{parallel} packages. Usage examples for a
-multiple-machine high performance MPI cluster can be found at the
-statnet wiki:
-\url{https://statnet.csde.washington.edu/trac/wiki/ergmParallel}
+or \code{parallel} packages.
 }
 
 \examples{
