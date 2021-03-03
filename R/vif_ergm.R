@@ -1,46 +1,14 @@
 #' Variance Inflation Factors for ERGMs
 #' 
-#' @param model model object as returned by [ergm()]
+#' @param object model object as returned by [ergm()]
 #' 
 #' @return 
-#' 
-#' @author 
-#' Based on original code by Scott W. Duxbury
 #' 
 #' @references 
 #' Duxbury, S. W. (2018). Diagnosing multicollinearity in exponential random
 #' graph models. Sociological Methods & Research <doi:10.1177/0049124118782543>
 #' 
 #' @export
-
-vif_ergm <- function(object, ...){
-  # Correlation matrix without the edges term
-  # TODO this should come from a set of simulated networks
-  cormat <- stats::cov2cor(object$covar)[-1, -1]
-
-  # MB: Not sure when there would be NAs in `covar`. Offsets perhaps? Commenting
-  # for now.
-  # 
-  # corr5<-corr5[!is.na(corr5[1:nrow(corr5)]),]
-  # corr5<-corr5[,which(!is.na(corr5[1,1:ncol(corr5)]))]
-  
-  
-  VIFS <- numeric(ncol(cormat))
-  
-  for(i in 1:ncol(cormat)){
-    # Correlations of i-th with the rest
-    gvec <- cormat[-i , i, drop=FALSE] ##create vector of correlations between covariate of interest and other covariates in the model
-    tgvec <- t(gvec)            
-    xcor <- solve( cormat[-i, -i] ) ##create square matrix of correlations between covariates in the model other than the one of interest
-    Rsq <- tgvec %*% xcor %*% gvec
-    VIFS[i] <- 1/(1-Rsq)
-  }
-  
-  names(VIFS) <- names(object$coef[-1])
-  #  message("Higher values indicate greater correlation.\nVIF > 20 is concerning, VIF > 100 indicates severe collinearity.")
-  VIFS
-}
-
 
 
 # Unique model term labels
@@ -54,8 +22,9 @@ vif_ergm <- function(object, ...){
 
 
 
-vif_ergm_new <- function(object, drop_terms = NULL, drop_coef = NULL) {
+vif_ergm_new <- function(object, drop_terms = NULL, drop_coef = NULL, ...) {
   stopifnot(inherits(object, "ergm"))
+  verbose <- getOption("verbose", FALSE)
   
   # Create `ergm_model` object to query the terms
   em <- ergm_model(object$formula, nw = object$network)
@@ -68,9 +37,6 @@ vif_ergm_new <- function(object, drop_terms = NULL, drop_coef = NULL) {
     coef_name = unlist(lapply(em$terms, "[[", "coef.names")),
     stringsAsFactors = FALSE
   )
-
-  # Get vcov matrix
-  v <- vcov(object)
 
   # Which rows/cols of the vcov matrix should be dropped?
   # Coefs:
@@ -87,38 +53,63 @@ vif_ergm_new <- function(object, drop_terms = NULL, drop_coef = NULL) {
       stop("terms not in the model: ", 
            paste(drop_terms[bad_term_label], collapse=", "), "\n", 
            "Terms in the model: ", paste(term_db$term_label, collapse=", "))
-    # We will drop union of drop_coefs and coefs corresponding to drop_terms
-    drop_coef <- unique(c(drop_coef, term_db$coef_name[term_db$term_label %in% drop_terms]))
   }
-  # Drop selected rowcols from vcov
-  if(!is.null(drop_coef)) {
+  # We are dropping union of `drop_coefs` and coefs corresponding to
+  # `drop_terms`
+  drop_coef <- with(
+    term_db,
+    coef_name[(coef_name %in% drop_coef) | (term_label %in% drop_terms) ]
+  )
+
+  # VCov matrix
+  v <- vcov(object, ...)
+  
+  if(length(drop_coef) > 0) {
     i <- match(drop_coef, colnames(v))
     v <- v[-i, -i]
+    term_db <- term_db[-i,]
   }
+  term_map <- with(term_db, match(term_label, unique(term_label)))
   
   R <- cov2cor(v)
   detR <- det(R)
   
-  # Per-coefficient VIFs
-  vifs <- numeric(ncol(R))
-  vifs_df <- rep(1, ncol(R))
-  for(i in seq(along=colnames(R))) {
-    gvec <- R[-i, i, drop=FALSE]
-    xcor <- solve(R[-i, -i, drop=FALSE])
-    vifs[i] <- 1 / (1 - t(gvec) %*% xcor %*% gvec)
+  # Calculate VIFs based on the correlation matrix and term matching vector
+  # R = correlation matrix between coefficients
+  # a = term assignment matching terms to row/cols of R
+  .do_vif <- function(R, a) {
+    stopifnot(identical(length(a), nrow(R)))
+    stopifnot(identical(length(a), ncol(R)))
+    detR <- det(R)
+    vif <- numeric(max(a))
+    df <- integer(max(a))
+    for(term in seq(1, max(a))) {
+      i <- which(a == term)
+      vif[term] <- det(R[i, i, drop=FALSE]) * det(R[-i, -i, drop=FALSE]) / detR
+      df[term] <- length(i)
+    }
+    data.frame(
+      vif = vif, 
+      df = df,
+      vif_sqrt = vif^(1/(2 * df))
+    )
   }
   
-  # TODO: Per-term VIFs
-  
+
   # Return
   structure(
     list(
-      vif_coef = data.frame(
-        name = rownames(R),
-        VIF = vifs,
-        df = vifs_df
+      vif_coef = cbind(
+        coef = term_db$coef_name, 
+        .do_vif(R, seq(1, nrow(R)))
+      ),
+      vif_term = cbind(
+        term = unique(term_db$term_label),
+        .do_vif(R, term_map)
       )
     ),
     class = "ergm_vif"
   )
 }
+
+

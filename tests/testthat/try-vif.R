@@ -27,6 +27,14 @@ to_drop <- lapply()
 
 R <- cov2cor(vcov(fit))
 
-vif_ergm_new(fit)
-vif_ergm_new(fit, drop_terms = "edges")
 
+data("faux.mesa.high")
+frm <- faux.mesa.high ~ nodefactor("Grade") + nodefactor("Race") +
+  nodefactor("Sex") + nodematch("Grade",diff=TRUE) +
+  nodematch("Race",diff=TRUE, levels=-c(1,4)) + nodematch("Sex",diff=FALSE) + edges
+fit <- ergm(frm)
+
+
+f(vif_ergm_new(fit))
+vif_ergm_new(fit, drop_terms = "edges") %>% f()
+vif_ergm_new(fit, drop_terms = c("edges", 'nodematch("Grade", diff = TRUE)')) %>% f()
