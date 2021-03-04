@@ -25,7 +25,7 @@ term_names <- structure(
 to_drop <- lapply()
 
 
-R <- cov2cor(vcov(fit))
+R <- cov2cor(vcov(fit, sources = "model"))
 
 
 data("faux.mesa.high")
@@ -38,3 +38,16 @@ fit <- ergm(frm)
 f(vif_ergm_new(fit))
 vif_ergm_new(fit, drop_terms = "edges") %>% f()
 vif_ergm_new(fit, drop_terms = c("edges", 'nodematch("Grade", diff = TRUE)')) %>% f()
+
+
+
+s <- simulate(fit, nsim=500, output="stats")
+R <- cor(s)
+R <- cov2cor(MASS::ginv(var(s)))
+
+plot(r, R)
+
+
+
+
+1 / (1 - R[1,-1, drop=FALSE] %*%  MASS::ginv(R[-1,-1, drop=FALSE]) %*% R[-1,1, drop=FALSE])
