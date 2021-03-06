@@ -47,7 +47,19 @@ test_that("vif_ergm.ergm_model() just works dropping coef edges and term nodefac
   expect_true(nrow(r$vif_term) == 1)
 })
 
+test_that("vif_ergm.ergm_model() errors when dropping non-existing term", {
+  expect_error(
+    vif_ergm(em, v = fake_vcov, drop_term = "foobar"),
+    "terms not in the model: foobar"
+  )
+})
 
+test_that("vif_ergm.ergm_model() errors when dropping non-existing coef", {
+  expect_error(
+    vif_ergm(em, v = fake_vcov, drop_coef = "foobar"),
+    "coefs not in the model: foobar"
+  )
+})
 
 
 # vif_ergm.ergm() ---------------------------------------------------------
