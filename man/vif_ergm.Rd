@@ -4,13 +4,16 @@
 \alias{vif_ergm}
 \alias{vif_ergm.ergm_model}
 \alias{vif_ergm.ergm}
+\alias{print.vif_ergm}
 \title{Variance Inflation Factors for ERGMs}
 \usage{
 vif_ergm(object, ...)
 
 \method{vif_ergm}{ergm_model}(object, v, drop_terms = NULL, drop_coef = NULL)
 
-\method{vif_ergm}{ergm}(object, ...)
+\method{vif_ergm}{ergm}(object, sources = "model", ...)
+
+\method{print}{vif_ergm}(x, ...)
 }
 \arguments{
 \item{object}{ERGM model specificaton as returned by \code{\link[=ergm_model]{ergm_model()}} or a
@@ -24,6 +27,12 @@ below.}
 \item{drop_terms}{character vector of term labels}
 
 \item{drop_coef}{character vector of coefficient names}
+
+\item{sources}{one of \code{"all"}, \code{"model"}, or \code{"estimation"}. Whether to
+return variance-covariance matrix from the ERGM model, the estimation
+process, or both combined. This argument is passed to \code{\link[=vcov.ergm]{vcov.ergm()}}}
+
+\item{x}{Object of class "vif_ergm"}
 }
 \value{
 An object of class \code{vif_ergm}...
@@ -35,7 +44,7 @@ Variance Inflation Factors for ERGMs
 \itemize{
 \item \code{ergm_model}: Based on \code{ergm_model} object and VCov matrix
 
-\item \code{ergm}: Method for \code{\link[=ergm]{ergm()}} modles
+\item \code{ergm}: Method for \code{\link[=ergm]{ergm()}} models
 }}
 
 \references{

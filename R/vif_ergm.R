@@ -111,7 +111,7 @@ vif_ergm.ergm_model <- function(object, v, drop_terms=NULL, drop_coef = NULL) {
   )
 }
 
-#' @describeIn vif_ergm Method for [ergm()] modles
+#' @describeIn vif_ergm Method for [ergm()] models
 #' 
 #' @param sources one of `"all"`, `"model"`, or `"estimation"`. Whether to
 #'   return variance-covariance matrix from the ERGM model, the estimation
@@ -125,6 +125,31 @@ vif_ergm.ergm <- function(object, sources = "model", ...) {
 }
 
 
+
+#' @rdname vif_ergm
+#' @param x Object of class "vif_ergm"
+#' @export
+print.vif_ergm <- function(x, ...) {
+  cat("\nERGM Variance Inflation Factors\n\n")
+  z <- x$vif_coef[,"vif", drop=FALSE]
+  names(z) <- "VIF"
+  rownames(z) <- x$vif_coef[,"coef"]
+  print(z)
+
+  cat("\nERGM Generalized Variance Inflation Factors\n\n")
+  z <- x$vif_term[,-1]
+  rownames(z) <- x$vif_term[,"term"]
+  names(z) <- c("GVIF", "Df", "GVIF^(1 / (Df * 2))")
+  print(z)
+  invisible(x)
+}
+
+
+
+
+
+
+
 # Unique model term labels
 # 
 # object = ergm_model
@@ -133,3 +158,7 @@ vif_ergm.ergm <- function(object, sources = "model", ...) {
   # Just deparse the term calls as used in the model formula
   vapply(object$terms, function(x) deparse(x$call), character(1))
 }
+
+
+
+

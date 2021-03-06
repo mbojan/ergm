@@ -89,3 +89,18 @@ test_that("vif_ergm.ergm_model() just works dropping coef edges and term nodefac
   expect_true(nrow(r$vif_coef) == 5)
   expect_true(nrow(r$vif_term) == 1)
 })
+
+
+
+
+
+test_that("vif_ergm(complexModel)", {
+  fit <- ergm(faux.mesa.high ~ nodefactor("Grade") + 
+                nodefactor("Race") +
+                nodefactor("Sex") + 
+                nodematch("Grade",diff=TRUE) +
+                nodematch("Race",diff=TRUE, levels=-c(1,4)) +
+                nodematch("Sex",diff=FALSE) + 
+                edges)
+  expect_silent(r <- vif_ergm(fit, drop_coef="edges"))
+})
