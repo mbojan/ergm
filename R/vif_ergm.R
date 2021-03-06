@@ -145,11 +145,6 @@ print.vif_ergm <- function(x, ...) {
 }
 
 
-
-
-
-
-
 # Unique model term labels
 # 
 # object = ergm_model
@@ -158,7 +153,3 @@ print.vif_ergm <- function(x, ...) {
   # Just deparse the term calls as used in the model formula
   vapply(object$terms, function(x) deparse(x$call), character(1))
 }
-
-
-
-
