@@ -2,23 +2,48 @@
 % Please edit documentation in R/vif_ergm.R
 \name{vif_ergm}
 \alias{vif_ergm}
+\alias{vif_ergm.ergm_model}
+\alias{vif_ergm.ergm}
 \title{Variance Inflation Factors for ERGMs}
 \usage{
 vif_ergm(object, ...)
+
+\method{vif_ergm}{ergm_model}(object, v, drop_terms = NULL, drop_coef = NULL)
+
+\method{vif_ergm}{ergm}(object, ...)
 }
 \arguments{
-\item{model}{model object as returned by \code{\link[=ergm]{ergm()}}}
+\item{object}{ERGM model specificaton as returned by \code{\link[=ergm_model]{ergm_model()}} or a
+fitted model model object as returned by \code{\link[=ergm]{ergm()}}. See Methods section
+below.}
+
+\item{...}{Other arguments passed to/from other methods.}
+
+\item{v}{Variance-covariance matrix}
+
+\item{drop_terms}{character vector of term labels}
+
+\item{drop_coef}{character vector of coefficient names}
 }
 \value{
-
+An object of class \code{vif_ergm}...
 }
 \description{
 Variance Inflation Factors for ERGMs
 }
+\section{Methods (by class)}{
+\itemize{
+\item \code{ergm_model}: Based on \code{ergm_model} object and VCov matrix
+
+\item \code{ergm}: Method for \code{\link[=ergm]{ergm()}} modles
+}}
+
 \references{
-Duxbury, S. W. (2018). Diagnosing multicollinearity in exponential random
-graph models. Sociological Methods & Research \url{doi:10.1177/0049124118782543}
-}
-\author{
-Based on original code by Scott W. Duxbury
+Duxbury, S. W. (2018). Diagnosing multicollinearity in
+exponential random graph models. \emph{Sociological Methods & Research}
+\doi{10.1177/0049124118782543}.
+
+Fox, J., Monette, G. (1992). Generalized Collinearity Diagnostics. \emph{Journal
+of the American Statistical Association} 87(417):178--183
+\doi{10.2307/2290467}.
 }

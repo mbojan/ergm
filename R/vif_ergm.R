@@ -33,7 +33,7 @@ vif_ergm.ergm_model <- function(object, v, drop_terms=NULL, drop_coef = NULL) {
   # DF of terms with names, labels, and coef.names
   coefs_per_term <- vapply(object$terms, function(k) length(k$coef.names), integer(1))
   term_db <- data.frame(
-    name = rep(vapply(em$terms, "[[", character(1), "name"), coefs_per_term),
+    name = rep(vapply(object$terms, "[[", character(1), "name"), coefs_per_term),
     term_label =rep(.term_labels(object), coefs_per_term),
     coef_name = unlist(lapply(object$terms, "[[", "coef.names")),
     stringsAsFactors = FALSE
@@ -113,11 +113,15 @@ vif_ergm.ergm_model <- function(object, v, drop_terms=NULL, drop_coef = NULL) {
 
 #' @describeIn vif_ergm Method for [ergm()] modles
 #' 
+#' @param sources one of `"all"`, `"model"`, or `"estimation"`. Whether to
+#'   return variance-covariance matrix from the ERGM model, the estimation
+#'   process, or both combined. This argument is passed to [vcov.ergm()]
+#' 
 #' @export
-vif_ergm.ergm <- function(object, ...) {
+vif_ergm.ergm <- function(object, sources = "model", ...) {
   # Create `ergm_model` object to query the terms
   em <- ergm_model(object$formula, nw = object$network)
-  vif_ergm.ergm_model(em, ...)
+  vif_ergm.ergm_model(em, v = vcov.ergm(object, sources=sources), ...)
 }
 
 
