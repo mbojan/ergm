@@ -53,7 +53,7 @@ vif_ergm.ergm_model <- function(object, v, drop_terms=NULL, drop_coef = NULL) {
     if(any(bad_term_label)) 
       stop("terms not in the model: ", 
            paste(drop_terms[bad_term_label], collapse=", "), "\n", 
-           "Terms in the model: ", paste(term_db$term_label, collapse=", "))
+           "Terms in the model: ", paste(unique(term_db$term_label), collapse=", "))
   }
   # We are dropping union of `drop_coefs` and coefs corresponding to
   # `drop_terms`
@@ -119,7 +119,6 @@ vif_ergm.ergm_model <- function(object, v, drop_terms=NULL, drop_coef = NULL) {
 #' 
 #' @export
 vif_ergm.ergm <- function(object, sources = "model", ...) {
-  # Create `ergm_model` object to query the terms
   em <- ergm_model(object$formula, nw = object$network)
   vif_ergm.ergm_model(em, v = vcov.ergm(object, sources=sources), ...)
 }
