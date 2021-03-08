@@ -1,11 +1,30 @@
-#' Generalized Variance Inflation Factors for ERGMs
+#' Generalized Variance-Inflation Factors for ERGMs
+#' 
+#' Variance Inflation-Factor (VIF) and its generalization (GVIF) due to Fox &
+#' Monette (1992) adopted to the ERGM context (see also Duxbury 2018).
 #' 
 #' @param object a fitted ERGM model object as returned by [ergm()] or ERGM
 #'   model specificaton as returned by [ergm_model()]. See Methods section
 #'   below.
 #' @param ... Other arguments passed to/from other methods.
 #' 
-#' @return An object of class `vif_ergm`...
+#' @return Function `vif_ergm` returns a list (of class "vif_ergm") of two data
+#'   frames:
+#' 
+#' - `vif_coef` with classical VIFs calculated per coefficient containing the
+#' following columns:
+#'     + `coef` -- ERGM parameter name
+#'     + `vif` -- Variance Inflation-Factor
+#'     + `df` -- Degrees of freedom, always 1
+#'     + `sif` -- Standard error Inflation-Factor
+#' - `vif_term` with GVIFs calculated per term containing the following columns:
+#'     + `term` -- ERG model term as in the model formula
+#'     + `vif` -- GVIF
+#'     + `df` -- Degrees of freedom
+#'     + `gsif` -- Generalized Standard error Inflation-Factor
+#'     + `gvif_avg` -- The value of \eqn{GVIF^(1 / Df)}, see Fox & Monette
+#'     + `gsif_avg` -- The value of \eqn{GVIF^(1 / (Df * 2))}, see Fox & Monette
+#'     (1992, sec. 3)
 #' 
 #' @references Duxbury, S. W. (2018). Diagnosing multicollinearity in
 #'   exponential random graph models. *Sociological Methods & Research*
@@ -26,7 +45,7 @@ vif_ergm <- function(object, ...) UseMethod("vif_ergm")
 #' 
 #' @param drop_terms character vector of term labels
 #' @param drop_coef character vector of coefficient names
-#' @param v Variance-covariance matrix
+#' @param v Variance-covariance matrix of model coefficients
 #' 
 #' @export
 vif_ergm.ergm_model <- function(object, v, drop_terms=NULL, drop_coef = NULL) {
@@ -90,21 +109,25 @@ vif_ergm.ergm_model <- function(object, v, drop_terms=NULL, drop_coef = NULL) {
     }
     data.frame(
       vif = vif, 
-      df = df,
-      vif_avg = vif^(1/(2 * df))
+      df = df
     )
   }
   
   # Return
   structure(
     list(
-      vif_coef = cbind(
-        coef = term_db$coef_name, 
-        .do_vif(R, seq(1, nrow(R)))
+      vif_coef = within(
+        cbind(coef = term_db$coef_name, .do_vif(R, seq(1, nrow(R)))),
+        sif <- sqrt(vif)
       ),
-      vif_term = cbind(
-        term = unique(term_db$term_label),
-        .do_vif(R, term_map)
+      vif_term = within(
+        cbind(term = unique(term_db$term_label), .do_vif(R, term_map)), {
+          gsif <- sqrt(vif)
+          gvif_avg <- vif^(1/df)
+          gsif_avg <- vif^(1/(2 * df))
+          gvif <- vif
+          rm(vif)
+        }
       )
     ),
     class = "vif_ergm"
@@ -126,19 +149,24 @@ vif_ergm.ergm <- function(object, sources = "model", ...) {
 
 
 #' @rdname vif_ergm
+#' 
 #' @param x Object of class "vif_ergm"
+#' 
 #' @export
 print.vif_ergm <- function(x, ...) {
   cat("\nERGM Variance Inflation Factors\n\n")
-  z <- x$vif_coef[,"vif", drop=FALSE]
-  names(z) <- "VIF"
+  z <- x$vif_coef[,c("vif", "sif"), drop=FALSE]
+  new_names <- c(vif="VIF", sif="SIF")
+  names(z) <- new_names[match(names(z), names(new_names))]
   rownames(z) <- x$vif_coef[,"coef"]
   print(z)
 
   cat("\nERGM Generalized Variance Inflation Factors\n\n")
   z <- x$vif_term[,-1]
   rownames(z) <- x$vif_term[,"term"]
-  names(z) <- c("GVIF", "Df", "GVIF^(1 / (Df * 2))")
+  new_names <- c(gvif="GVIF", df="Df", gsif="GSIF", 
+                 gvif_avg="GVIF^(1 / (Df * 2))", gsif_avg="GSIF^(1 / Df)")
+  names(z) <- new_names[match(names(z), names(new_names))]
   print(z)
   invisible(x)
 }

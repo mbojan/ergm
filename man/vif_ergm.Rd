@@ -5,7 +5,7 @@
 \alias{vif_ergm.ergm_model}
 \alias{vif_ergm.ergm}
 \alias{print.vif_ergm}
-\title{Variance Inflation Factors for ERGMs}
+\title{Generalized Variance-Inflation Factors for ERGMs}
 \usage{
 vif_ergm(object, ...)
 
@@ -16,8 +16,8 @@ vif_ergm(object, ...)
 \method{print}{vif_ergm}(x, ...)
 }
 \arguments{
-\item{object}{ERGM model specificaton as returned by \code{\link[=ergm_model]{ergm_model()}} or a
-fitted model model object as returned by \code{\link[=ergm]{ergm()}}. See Methods section
+\item{object}{a fitted ERGM model object as returned by \code{\link[=ergm]{ergm()}} or ERGM
+model specificaton as returned by \code{\link[=ergm_model]{ergm_model()}}. See Methods section
 below.}
 
 \item{...}{Other arguments passed to/from other methods.}
@@ -35,10 +35,28 @@ process, or both combined. This argument is passed to \code{\link[=vcov.ergm]{vc
 \item{x}{Object of class "vif_ergm"}
 }
 \value{
-An object of class \code{vif_ergm}...
+An object of class \code{vif_ergm}, a list of two data frames:
+\itemize{
+\item \code{vif_coef} with classical VIFs calculated per coefficient containing the
+following columns:
+\itemize{
+\item \code{coef} -- ERGM parameter name
+\item \code{vif} -- VIF
+\item \code{df} -- Degrees of freedom, always 1
+}
+\item \code{vif_term} with GVIFs calculated per term containing the following columns:
+\itemize{
+\item \code{term} -- ERG model term as in the model formula
+\item \code{vif} -- GVIF
+\item \code{df} -- Degrees of freedom
+\item \code{vif_avg} -- The value of \eqn{GVIF^(1 / (Df * 2))}, see Fox & Monette
+(1992, sec. 3)
+}
+}
 }
 \description{
-Variance Inflation Factors for ERGMs
+Variance Inflation-Factor (VIF) and its generalization (GVIF) due to Fox &
+Monette (1992) adopted to the ERGM context (see also Duxbury 2018).
 }
 \section{Methods (by class)}{
 \itemize{
