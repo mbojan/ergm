@@ -1,7 +1,7 @@
-#' Variance Inflation Factors for ERGMs
+#' Generalized Variance Inflation Factors for ERGMs
 #' 
-#' @param object ERGM model specificaton as returned by [ergm_model()] or a
-#'   fitted model model object as returned by [ergm()]. See Methods section
+#' @param object a fitted ERGM model object as returned by [ergm()] or ERGM
+#'   model specificaton as returned by [ergm_model()]. See Methods section
 #'   below.
 #' @param ... Other arguments passed to/from other methods.
 #' 
@@ -91,7 +91,7 @@ vif_ergm.ergm_model <- function(object, v, drop_terms=NULL, drop_coef = NULL) {
     data.frame(
       vif = vif, 
       df = df,
-      vif_sqrt = vif^(1/(2 * df))
+      vif_avg = vif^(1/(2 * df))
     )
   }
   
