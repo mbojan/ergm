@@ -63,14 +63,14 @@ vif_ergm.ergm_model <- function(object, v, drop_terms=NULL, drop_coef = NULL) {
   if(!is.null(drop_coef)) {
     bad_coef_name <- !(drop_coef %in% term_db$coef_name)
     if(any(bad_coef_name))
-      stop("coefs not in the model: ", 
+      stop("`drop_coef` contains coefficients not found in the model: ", 
            paste(drop_coef[bad_coef_name], collapse=", "))
   }
   # Term labels (expecting deparsed formula summands):
   if(!is.null(drop_terms)) {
     bad_term_label <- !(drop_terms %in% term_db$term_label)
     if(any(bad_term_label)) 
-      stop("terms not in the model: ", 
+      stop("`drop_terms` contains terms not found in the model: ", 
            paste(drop_terms[bad_term_label], collapse=", "), "\n", 
            "Terms in the model: ", paste(unique(term_db$term_label), collapse=", "))
   }
